@@ -1,4 +1,4 @@
-# Muse Sermon by Rihanna
+# Muse Sermon by Rihanna (Chatbot)
 
 A study companion for preachers in the African American church tradition, King James Version by default, in the same pattern as Muse Engine: stdlib-only
 Python, plain JSON on disk, no network. It does not write the sermon. It records
