@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Muse Sermon</title>
+<style>
+:root{color-scheme:dark;--bg:#14122b;--card:#241f45;--gold:#e8b04a;--ink:#f3f0fa;--mut:#9d96b8}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 Georgia,serif;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+header{padding:12px 16px;border-bottom:1px solid #ffffff18}
+h1{font-size:20px;margin:0;color:var(--gold)}
+.sub{font:12px Helvetica,Arial,sans-serif;color:var(--mut)}
+.hd{display:flex;align-items:center;gap:10px}.av{width:44px;height:44px;border-radius:50%}.hero{width:100%;border-radius:14px}.nm{font:600 11px Helvetica,Arial,sans-serif;color:var(--gold);margin-bottom:3px}
+.dots{display:flex;gap:6px;margin-top:8px}.dots i{flex:1;height:5px;border-radius:3px;background:#ffffff22}.dots i.on{background:var(--gold)}
+#setup,#chat{flex:1;min-height:0;display:flex;flex-direction:column}
+#setup{padding:16px;overflow:auto;gap:12px}
+label{font:13px Helvetica,Arial,sans-serif;color:var(--mut);display:block;margin-bottom:4px}
+input,textarea{width:100%;background:var(--card);color:var(--ink);border:1px solid #ffffff22;border-radius:12px;padding:12px;font:16px Georgia,serif}
+button{font:600 15px Helvetica,Arial,sans-serif;border:0;border-radius:24px;padding:12px 18px;background:var(--gold);color:#14122b}
+button.ghost{background:var(--card);color:var(--ink);border:1px solid #ffffff22;padding:8px 14px;font-size:13px}
+#log{flex:1;overflow:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:88%;padding:10px 14px;border-radius:16px;white-space:pre-wrap}
+.m.bot{background:var(--card);align-self:flex-start;border-bottom-left-radius:4px}
+.m.me{background:var(--gold);color:#14122b;align-self:flex-end;border-bottom-right-radius:4px}
+.tag{font:11px Helvetica,Arial,sans-serif;color:var(--mut);margin-top:6px}
+.chips{display:flex;gap:8px;padding:8px 12px;overflow-x:auto}
+.chips button{white-space:nowrap}
+form{display:flex;gap:8px;padding:8px 12px 12px}
+form textarea{flex:1;height:48px;resize:none}
+.hide{display:none!important}
+</style></head><body>
+<header><div class="hd"><img src="/static/tammy.jpg" alt="Mother Tammy" class="av"><h1>Muse Sermon</h1></div>
+<div class="sub" id="sub">A study companion for the Black church pulpit · KJV · it asks, you preach</div>
+<div class="dots" id="dots"></div></header>
+
+<section id="setup" class="hide">
+<img class="hero" src="/static/hero.jpg" alt="Muse Sermon with Mother Tammy">
+<div><label>Sermon title</label><input id="t" placeholder="Hold Fast"></div>
+<div><label>Text (KJV)</label><input id="x" placeholder="Hebrews 4:12–16"></div>
+<div><label>Your church or denomination (optional, your words)</label><input id="d" placeholder="Baptist, AME, COGIC…"></div>
+<div><label>Who is in the room? (optional)</label><textarea id="c" rows="3" placeholder="The grieving, the doubting, the new believer, the long-time member…"></textarea></div>
+<button id="go">Begin preparing</button>
+<div class="sub">The sermon has to be yours. Muse Sermon asks the questions.</div>
+</section>
+
+<section id="chat" class="hide">
+<div id="log"></div>
+<div class="chips">
+<button class="ghost" data-c="/next">Next stage</button>
+<button class="ghost" data-p="/exigency ">Text’s exigency</button>
+<button class="ghost" data-p="/sermon ">Sermon’s exigency</button>
+<button class="ghost" data-p="/gospel ">Gospel response</button>
+<button class="ghost" data-c="/status">Status</button>
+<button class="ghost" id="exp">Export</button>
+<button class="ghost" id="new">New sermon</button>
+</div>
+<form id="f"><textarea id="m" placeholder="What have you noticed?"></textarea><button>Send</button></form>
+</section>
+
+<script>
+const $=s=>document.querySelector(s);let sid=null;
+try{sid=localStorage.getItem('muse_sid')}catch(e){}
+const dots=n=>{$('#dots').innerHTML=Array.from({length:7},(_,i)=>`<i class="${i<=n?'on':''}"></i>`).join('')};
+async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return r.json()}
+function add(t,who,tag){const d=document.createElement('div');d.className='m '+who;
+ if(who==='bot'){const n=document.createElement('div');n.className='nm';n.textContent=window.persona||'Mother Tammy';d.appendChild(n)}
+ d.appendChild(document.createTextNode(t));
+ if(tag){const g=document.createElement('div');g.className='tag';g.textContent=tag;d.appendChild(g)}
+ $('#log').appendChild(d);$('#log').scrollTop=1e9}
+function head(r){if(r.persona)window.persona=r.persona;dots(r.stage);$('#sub').textContent=`${r.stage_name} · ${r.stage+1} of ${r.stages} · ${r.translation} · ${r.mode==='llm+engine'?'LLM + engine':'engine'}`}
+function show(w){$('#setup').classList.toggle('hide',w!=='setup');$('#chat').classList.toggle('hide',w!=='chat')}
+async function resume(){const r=await api('/api/resume',{sid});if(r.error){sid=null;show('setup');dots(-1);return}
+ show('chat');head(r);r.chat.forEach(m=>add(m.content,m.role==='user'?'me':'bot'))}
+$('#go').onclick=async()=>{const r=await api('/api/start',{title:$('#t').value,text:$('#x').value,denomination:$('#d').value,congregation:$('#c').value});
+ if(r.error){alert(r.error);return}sid=r.sid;try{localStorage.setItem('muse_sid',sid)}catch(e){}
+ $('#log').innerHTML='';show('chat');head(r);add(r.reply,'bot')};
+async function send(t){if(!t.trim())return;add(t,'me');$('#m').value='';
+ const r=await api('/api/chat',{sid,message:t});if(r.error){add(r.error,'bot');return}
+ head(r);add(r.reply,'bot',r.flags.length?'flagged: '+r.flags.join(', '):'')}
+$('#f').onsubmit=e=>{e.preventDefault();send($('#m').value)};
+document.querySelectorAll('.chips [data-c]').forEach(b=>b.onclick=()=>send(b.dataset.c));
+document.querySelectorAll('.chips [data-p]').forEach(b=>b.onclick=()=>{$('#m').value=b.dataset.p;$('#m').focus()});
+$('#exp').onclick=()=>{location.href='/api/export?sid='+sid};
+$('#new').onclick=()=>{if(confirm('Start a new sermon? This one stays saved on the server.')){try{localStorage.removeItem('muse_sid')}catch(e){}sid=null;show('setup');dots(-1);$('#sub').textContent='A study companion for the Black church pulpit · KJV'}};
+sid?resume():(show('setup'),dots(-1));
+</script></body></html>

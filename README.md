@@ -4,6 +4,22 @@ A study companion for preachers in the African American church tradition, King J
 Python, plain JSON on disk, no network. It does not write the sermon. It records
 your notes, tracks where preparation sits, and asks the questions the work requires.
 
+## Run the chatbot
+    python3 server.py            # open http://localhost:8000, works on a phone on the same network
+    ANTHROPIC_API_KEY=... python3 server.py   # optional: an LLM writes the replies
+
+No dependencies. With no key the engine itself asks the questions (mode: engine).
+With a key, the LLM talks, but the engine record (stage, your notes, flags, exigency
+statements) is the source of truth, and "write me a sermon" is always declined by
+the engine before the LLM sees it. Sessions are saved as JSON in ./data. The
+Export button downloads your study record as markdown. It needs a Python host
+(not a static host).
+
+Persona: replies come in the voice of Mother Tammy, a church mother with attitude (set MUSE_PERSONA to rename her). The sass is in word choice; she still pushes back and still won’t write the sermon. Images: static/hero.jpg and static/tammy.jpg are illustrations; replace them with your own JPGs of the same names.
+
+Files: server.py (chatbot server), index.html (chat UI), muse_sermon.py (engine +
+CLI), SYSTEM_PROMPT.md (LLM prompt), marketing/ (graphics).
+
 ## Built for the Black church pulpit
 Defaults: tradition = Black church (African American), translation = KJV. At every stage it adds questions drawn from that tradition: the cloud of witnesses, whose cry or sin the text names, the concrete conditions your people face, hope vs. denial, the refrain, humor and the close, stewardship plus structure. It does not guess your denomination's distinctives; you name them. For KJV it reminds you to check archaic or shifted wording against the Hebrew/Greek.
 
